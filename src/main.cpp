@@ -1,11 +1,15 @@
-#include <iostream>
+#include <stdio.h>
+
+#ifdef __AVX__
+#pragma message "AVX is detected by the compiler!"
+#endif
 
 int main() {
-    std::cout << "Hello from WSL2!" << std::endl;
     #ifdef __AVX__
-        printf("__AVX__ is defined\n");
+        printf("AVX is enabled!\n");
     #else
-        printf("__AVX__ is NOT defined\n");
+        printf("AVX is NOT enabled!\n");
     #endif
+
     return 0;
 }

@@ -5,7 +5,6 @@
 #include <x86intrin.h>
 #include <sleef.h>
 
-#ifdef __AVX__
 
 
 class PositionalEncoding {
@@ -156,7 +155,3 @@ private:
     }
 
 };
-
-#else
-#error "AVX support is required for this code."
-#endif
