@@ -20,12 +20,6 @@ cmake ..
 make
 ```
 
-## Usage
-Once built, you can run the executable:
-```sh
-./neural_net_simd
-```
-
 ## Dependencies
 - C++17 or later
 - CMake (for build configuration)
