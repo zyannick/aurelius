@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(Aurelius)
 
 find_package(Eigen3 REQUIRED) 
-find_package(SLEEF REQUIRED) 
-
+find_package(OpenCV REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(Git REQUIRED)
 
 
