@@ -1,8 +1,7 @@
 #include <iostream>
 #include <eigen3/Eigen/Dense>  // For dense matrices and vectors
-#include <layer.hh>
 
-class BatchNormalization : public Layer<BatchNormalization, Eigen::MatrixXf, Eigen::MatrixXf> {
+class BatchNormalization {
     int d_model;
     Eigen::MatrixXf gamma;
     Eigen::MatrixXf beta;
@@ -21,5 +20,7 @@ class BatchNormalization : public Layer<BatchNormalization, Eigen::MatrixXf, Eig
         Eigen::MatrixXf normalized = (input.rowwise() - mean.transpose()).array().rowwise() / (variance.transpose().array() + epsilon).sqrt();
         return (normalized.array().rowwise() * gamma.array()).rowwise() + beta.transpose().array();
     }
+
+    
 
 };
