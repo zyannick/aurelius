@@ -3,10 +3,11 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include "modules/layer.hh"
 
 constexpr int ALIGNMENT = 32;
 
-struct Linear
+struct Linear : public Layer
 {
     int in_features, out_features;
     Eigen::MatrixXf weights;
@@ -16,7 +17,7 @@ struct Linear
     Eigen::VectorXf bias_gradients;
     bool use_avx = true;
 
-    Linear(int in_f, int out_f) : in_features(in_f), out_features(out_f)
+    Linear(int in_f, int out_f) : Layer("Linear"), in_features(in_f), out_features(out_f)
     {
         weights = Eigen::MatrixXf::Random(out_f, in_f);
         bias = Eigen::VectorXf::Zero(out_f);
