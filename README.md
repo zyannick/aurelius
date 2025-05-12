@@ -25,9 +25,12 @@ make
 - CMake (for build configuration)
 
 ## Roadmap
+- [x] Linear Layer
+- [x] Convolution Layer
 - [ ] Complete attention mechanism implementation
 - [ ] Add more layers with SIMD acceleration
 - [ ] Benchmark performance against non-SIMD implementations
+- [ ] Setup a AlexNet model
 
 ## Contributing
 Contributions are welcome! Feel free to open issues or submit pull requests.
