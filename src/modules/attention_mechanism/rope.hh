@@ -1,6 +1,9 @@
+#pragma once
 #include <iostream>
-#include <eigen3/Eigen/Dense>  // For dense matrices and vectors
+#include <eigen3/Eigen/Dense>  
 #include <cmath>
+#include <immintrin.h> 
+#include <x86intrin.h>
 
 class RoPE {
 

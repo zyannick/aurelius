@@ -1,3 +1,4 @@
+#pragma once
 #include <immintrin.h>
 #include <eigen3/Eigen/Dense>
 #include <iostream>

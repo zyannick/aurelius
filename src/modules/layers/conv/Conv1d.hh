@@ -4,8 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <eigen3/unsupported/Eigen/CXX11/Tensor>
-#define EIGEN_USE_THREADS
 
 #include "src/modules/layers/layer.hh"
 #include "src/modules/optimizers/optimizer.hh"
@@ -17,163 +15,28 @@ class Conv1d : public ConvLayer
 public:
     Conv1d(int in_c, int out_c, int k_s, int s, int p)
     {
+        in_channels = in_c;
+        out_channels = out_c;
         kernel_size = k_s;
         stride = s;
         padding = p;
-        in_channels = in_c;
-        out_channels = out_c;
-        weights = Eigen::Tensor<float, 2>(out_c, in_c * k_s);
-        weights.setRandom();
-        bias = Eigen::Tensor<float, 1>(out_c);
-        bias.setZero();
-        weight_gradients = Eigen::Tensor<float, 2>(out_c, in_c * k_s);
-        weight_gradients.setRandom();
-        bias_gradients = Eigen::Tensor<float, 1>(out_c);
-        bias_gradients.setZero();
-    }
-
-    Eigen::MatrixXf forward(const Eigen::Tensor<float, 2> &input)
-    {
-        last_input = input;
-        if (use_avx)
+        if (in_c <= 0 || out_c <= 0 || k_s <= 0 || s <= 0)
         {
-            return forward_simd(last_input);
+            throw std::invalid_argument("Input and output channels, kernel size, and stride must be positive.");
         }
-        else
+        if (padding < 0)
         {
-            return forward_vectorized(last_input);
+            throw std::invalid_argument("Padding must be non-negative.");
         }
-    }
-
-    Eigen::MatrixXf backward(const Eigen::Tensor<float, 2> &grad_output)
-    {
-        // grad_output has shape (out_features, output_length)
-        // last_input_ has shape (in_features, L_in)
-
-        // Initialize/Reset gradients for weights and biases for the current batch
-        // (Assuming reset_gradients() is called before a new batch's backward pass,
-        // or gradients are accumulated if not reset)
-        // If not accumulating across multiple backward calls before an update:
-        weight_gradients.setZero();
-        bias_gradients.setZero();
-
-        int L_in = last_input.cols();
-        int output_length = grad_output.cols(); // Should match forward output_length
-
-        // 1. Calculate weight_gradients and bias_gradients
-        for (int oc = 0; oc < out_channels; ++oc)
-        {
-            for (int t_out = 0; t_out < output_length; ++t_out)
-            {
-                float go = grad_output(oc, t_out);
-                bias_gradients(oc) += go; // Accumulate gradient for bias
-
-                int t_in_start = t_out * stride - padding;
-                for (int ic = 0; ic < in_channels; ++ic)
-                {
-                    for (int k = 0; k < kernel_size; ++k)
-                    {
-                        int current_t_in = t_in_start + k;
-                        float input_val = 0.0f;
-
-                        if (current_t_in >= 0 && current_t_in < L_in)
-                        {
-                            input_val = last_input(ic, current_t_in);
-                        }
-                        // else input_val is 0.0f (from zero-padding)
-
-                        int flat_kernel_idx = ic * kernel_size + k;
-                        weight_gradients(oc, flat_kernel_idx) += go * input_val;
-                    }
-                }
-            }
-        }
-
-        // 2. Calculate grad_input (gradient with respect to layer's input)
-        // Your existing grad_input calculation needs to be reviewed for correctness
-        // with respect to "full convolution" principles if stride/padding are involved.
-        // The "dilated" weights are used, and grad_output is convolved with "rotated" weights.
-
-        // grad_input calculation (simplified conceptual loop, careful with indices for stride/padding)
-        Eigen::MatrixXf grad_input(in_channels, L_in);
-        grad_input.setZero();
-
-        for (int ic = 0; ic < in_channels; ++ic)
-        { // Input channel of grad_input
-            for (int t_in = 0; t_in < L_in; ++t_in)
-            { // Time step of grad_input
-                float sum_grad = 0.0f;
-                for (int oc = 0; oc < out_channels; ++oc)
-                { // Output channel
-                    for (int k = 0; k < kernel_size; ++k)
-                    { // Kernel offset
-                        // Calculate which t_out this (t_in, k) contributed to
-                        // t_out * stride - padding + k = t_in  => t_out * stride = t_in + padding - k
-                        if ((t_in + padding - k) % stride == 0)
-                        {
-                            int t_out = (t_in + padding - k) / stride;
-                            if (t_out >= 0 && t_out < output_length)
-                            {
-                                int flat_kernel_idx = ic * kernel_size + k;
-                                sum_grad += grad_output(oc, t_out) * weights(oc, flat_kernel_idx);
-                            }
-                        }
-                    }
-                }
-                grad_input(ic, t_in) = sum_grad;
-            }
-        }
-        return grad_input;
-    }
-
-    void apply_gradients(float learning_rate) override
-    {
-        weights -= learning_rate * weight_gradients;
-        bias -= learning_rate * bias_gradients;
-    }
-    void set_optimizer(std::unique_ptr<Optimizer> opt) override
-    {
-        layer_optimizer = std::move(opt);
-    }
-    void set_use_avx(bool flag) override
-    {
-        use_avx = flag;
-    }
-    bool get_use_avx() const override
-    {
-        return use_avx;
-    }
-    int get_in_features() const override
-    {
-        return in_channels;
-    }
-    int get_out_features() const override
-    {
-        return out_channels;
-    }
-    Eigen::MatrixXf get_weights() const override
-    {
-        return weights;
-    }
-    Eigen::VectorXf get_bias() const override
-    {
-        return bias;
-    }
-    void set_weights(const Eigen::MatrixXf &new_weights) override
-    {
-        weights = new_weights;
-    }
-    void set_bias(const Eigen::VectorXf &new_bias) override
-    {
-        bias = new_bias;
-    }
-    void reset_gradients()
-    {
-        weight_gradients.setZero();
-        bias_gradients.setZero();
+        weights = Eigen::MatrixXf::Random(out_c, in_c * k_s);
+        bias = Eigen::VectorXf::Zero(out_c);
+        weight_gradients = Eigen::MatrixXf::Zero(out_c, in_c * k_s);
+        bias_gradients = Eigen::VectorXf::Zero(out_c);
     }
 
 private:
+
+
     Eigen::MatrixXf forward_simd(const Eigen::MatrixXf &input)
     {
         int output_length = (input.cols() - kernel_size + 2 * padding) / stride + 1;
@@ -256,5 +119,130 @@ private:
             }
         }
         return output;
+    }
+
+    Eigen::MatrixXf forward(const Eigen::MatrixXf &input)
+    {
+        last_input = input;
+        if (use_avx)
+        {
+            return forward_simd(last_input);
+        }
+        else
+        {
+            return forward_vectorized(last_input);
+        }
+    }
+
+    Eigen::MatrixXf backward(const Eigen::MatrixXf &grad_output)
+    {
+        weight_gradients.setZero();
+        bias_gradients.setZero();
+
+        int L_in = last_input.cols();
+        int output_length = grad_output.cols(); 
+        for (int oc = 0; oc < out_channels; ++oc)
+        {
+            for (int t_out = 0; t_out < output_length; ++t_out)
+            {
+                float go = grad_output(oc, t_out);
+                bias_gradients(oc) += go; 
+
+                int t_in_start = t_out * stride - padding;
+                for (int ic = 0; ic < in_channels; ++ic)
+                {
+                    for (int k = 0; k < kernel_size; ++k)
+                    {
+                        int current_t_in = t_in_start + k;
+                        float input_val = 0.0f;
+
+                        if (current_t_in >= 0 && current_t_in < L_in)
+                        {
+                            input_val = last_input(ic, current_t_in);
+                        }
+
+                        int flat_kernel_idx = ic * kernel_size + k;
+                        weight_gradients(oc, flat_kernel_idx) += go * input_val;
+                    }
+                }
+            }
+        }
+
+
+        Eigen::MatrixXf grad_input(in_channels, L_in);
+        grad_input.setZero();
+
+        for (int ic = 0; ic < in_channels; ++ic)
+        { 
+            for (int t_in = 0; t_in < L_in; ++t_in)
+            { 
+                float sum_grad = 0.0f;
+                for (int oc = 0; oc < out_channels; ++oc)
+                { 
+                    for (int k = 0; k < kernel_size; ++k)
+                    { 
+
+                        if ((t_in + padding - k) % stride == 0)
+                        {
+                            int t_out = (t_in + padding - k) / stride;
+                            if (t_out >= 0 && t_out < output_length)
+                            {
+                                int flat_kernel_idx = ic * kernel_size + k;
+                                sum_grad += grad_output(oc, t_out) * weights(oc, flat_kernel_idx);
+                            }
+                        }
+                    }
+                }
+                grad_input(ic, t_in) = sum_grad;
+            }
+        }
+        return grad_input;
+    }
+
+    void apply_gradients(float learning_rate) override
+    {
+        weights -= learning_rate * weight_gradients;
+        bias -= learning_rate * bias_gradients;
+    }
+    void set_optimizer(std::unique_ptr<Optimizer> opt) override
+    {
+        layer_optimizer = std::move(opt);
+    }
+    void set_use_avx(bool flag) override
+    {
+        use_avx = flag;
+    }
+    bool get_use_avx() const override
+    {
+        return use_avx;
+    }
+    int get_in_features() const override
+    {
+        return in_channels;
+    }
+    int get_out_features() const override
+    {
+        return out_channels;
+    }
+    Eigen::MatrixXf get_weights() const override
+    {
+        return weights;
+    }
+    Eigen::VectorXf get_bias() const override
+    {
+        return bias;
+    }
+    void set_weights(const Eigen::MatrixXf &new_weights) override
+    {
+        weights = new_weights;
+    }
+    void set_bias(const Eigen::VectorXf &new_bias) override
+    {
+        bias = new_bias;
+    }
+    void reset_gradients()
+    {
+        weight_gradients.setZero();
+        bias_gradients.setZero();
     }
 };

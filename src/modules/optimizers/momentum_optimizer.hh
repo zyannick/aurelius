@@ -1,3 +1,4 @@
+#pragma once
 #include <immintrin.h>        
 #include <eigen3/Eigen/Dense> 
 #include <iostream>
@@ -7,8 +8,6 @@
 #include <stdexcept> 
 #include <memory>   
 #include <chrono>    
-#include <eigen3/unsupported/Eigen/CXX11/Tensor>
-#define EIGEN_USE_THREADS
 
 #include "src/modules/optimizers/optimizer.hh"
 
@@ -27,8 +26,8 @@ public:
     {
         if (!initialized)
         {
-            m_weights_momentum = Eigen::MatrixXf(weights.dimensions());
-            m_bias_momentum = Eigen::VectorXf(bias.dimensions());
+            m_weights_momentum = Eigen::MatrixXf::Zero(weights.rows(), weights.cols());
+            m_bias_momentum = Eigen::VectorXf::Zero(bias.size());
             initialized = true;
         }
     }

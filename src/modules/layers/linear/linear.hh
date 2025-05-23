@@ -1,14 +1,12 @@
+#pragma once
 #include <immintrin.h>
 #include <eigen3/Eigen/Dense>
-#include <eigen3/unsupported/Eigen/CXX11/Tensor>
 #include <iostream>
 #include <vector>
 #include <cmath>
 
 #include "src/modules/layers/layer.hh"
 #include "src/modules/optimizers/optimizer.hh"
-
-#define EIGEN_USE_THREADS
 
 constexpr int ALIGNMENT = 32;
 
@@ -19,38 +17,42 @@ public:
     {
         in_features = in_f;
         out_features = out_f;
-        weights = Eigen::Tensor<float, 2>(out_f, in_f);
-        weights.setRandom();
-        bias = Eigen::Tensor<float, 1>(out_f);
-        bias.setZero();
-        weight_gradients = Eigen::Tensor<float, 2>(out_f, in_f);
-        weight_gradients.setRandom();
-        bias_gradients = Eigen::Tensor<float, 1>(out_f);
-        bias_gradients.setZero();
+        if (in_f <= 0 || out_f <= 0)
+        {
+            throw std::invalid_argument("Input and output features must be positive.");
+        }
+        weights = Eigen::MatrixXf::Random(out_f, in_f);
+        bias = Eigen::VectorXf::Zero(out_f);
+        weight_gradients = Eigen::MatrixXf::Zero(out_f, in_f);
+        bias_gradients = Eigen::VectorXf::Zero(out_f);
     }
 
-    Eigen::Tensor<float, 2> forward(const Eigen::Tensor<float, 2> &input) override
+    Eigen::MatrixXf forward(const Eigen::MatrixXf &input) override
     {
+        if (input.rows() != in_features)
+        {
+            throw std::invalid_argument("Input features dimension mismatch in Linear::forward.");
+        }
         last_input = input;
         if (use_avx && in_features >= 8)
             return forward_simd(input);
         return forward_vectorized(input);
     }
 
-    Eigen::Tensor<float, 2> backward(const Eigen::Tensor<float, 2> &grad_output) override
+    Eigen::MatrixXf backward(const Eigen::MatrixXf &grad_output) override
     {
-        if (grad_output.dimension(0) != out_features || grad_output.dimension(1) != last_input.cols())
+        if (grad_output.rows() != out_features || grad_output.cols() != last_input.cols())
         {
             throw std::invalid_argument("Gradient output dimensions mismatch in Linear::backward.");
         }
-        int batch_size = grad_output.dimension(1);
+        int batch_size = grad_output.cols();
         if (batch_size == 0)
-            return Eigen::Tensor<float, 1>(in_features, 0);
+            return Eigen::MatrixXf::Zero(in_features, 0);
 
         float inv_batch_size = 1.0f / static_cast<float>(batch_size);
-        Eigen::Tensor<float, 2> grad_input = weights.shuffle(Eigen::array<int, 2>{1, 0}) * grad_output;
-        weight_gradients = (grad_output * last_input.shuffle(Eigen::array<int, 2>{1, 0})) * inv_batch_size;
-        bias_gradients = grad_output.sum(Eigen::array<int, 1>({1})) * inv_batch_size;
+        Eigen::MatrixXf grad_input = weights.transpose() * grad_output;
+        weight_gradients = (grad_output * last_input.transpose()) * inv_batch_size;
+        bias_gradients = grad_output.rowwise().sum() * inv_batch_size;
         return grad_input;
     }
 
@@ -76,12 +78,12 @@ public:
     bool get_use_avx() const { return use_avx; }
     int get_in_features() const { return in_features; }
     int get_out_features() const { return out_features; }
-    Eigen::Tensor<float, 2> get_weights() const { return weights; }
-    Eigen::Tensor<float, 1> get_bias() const { return bias; }
+    Eigen::MatrixXf get_weights() const { return weights; }
+    Eigen::VectorXf get_bias() const { return bias; }
 
-    void set_weights(const Eigen::Tensor<float, 2> &new_weights) override
+    void set_weights(const Eigen::MatrixXf &new_weights) override
     {
-        if (new_weights.dimension(0) != out_features || new_weights.dimension(1) != in_features)
+        if (new_weights.rows() != out_features || new_weights.cols() != in_features)
         {
             throw std::invalid_argument("Weight dimensions mismatch in set_weights");
         }
@@ -90,7 +92,7 @@ public:
             layer_optimizer->reset_state();
     }
 
-    void set_bias(const Eigen::Tensor<float, 1> &new_bias) override
+    void set_bias(const Eigen::VectorXf &new_bias) override
     {
         if (new_bias.size() != out_features)
         {
@@ -102,12 +104,13 @@ public:
     }
 
 private:
-    Eigen::Tensor<float, 2> forward_simd(const Eigen::Tensor<float, 2> &input)
+
+    Eigen::MatrixXf forward_simd(const Eigen::MatrixXf &input)
     {
-        Eigen::Tensor<float, 2> output(out_features, input.dimension(1));
+        Eigen::MatrixXf output(out_features, input.cols());
         for (int i = 0; i < out_features; ++i)
         {
-            for (int b = 0; b < input.dimension(1); ++b)
+            for (int b = 0; b < input.cols(); ++b)
             {
                 __m256 sum = _mm256_setzero_ps();
                 int j = 0;
@@ -137,10 +140,8 @@ private:
         return output;
     }
 
-    Eigen::Tensor<float, 2> forward_vectorized(const Eigen::Tensor<float, 2> &input)
+    Eigen::MatrixXf forward_vectorized(const Eigen::MatrixXf &input)
     {
-        Eigen::array<Eigen::IndexPair<int>, 1> product_dims = {Eigen::IndexPair<int>(1, 1)};
-        Eigen::Tensor<float, 2> output = weights.contract(input, product_dims);
-        return output + bias.reshape(Eigen::array<int, 2>{out_features, 1}).broadcast(Eigen::array<int, 2>{1, input.dimension(1)});
+        return (weights * input).colwise() + bias;
     }
 };
