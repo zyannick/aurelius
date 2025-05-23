@@ -4,7 +4,6 @@ project(Aurelius)
 include_directories($ENV{HOME}/.local/include/)
 
 find_package(Eigen3 REQUIRED) 
-find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(Git REQUIRED)
 
 

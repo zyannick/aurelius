@@ -37,7 +37,7 @@ namespace aurelius
             }
         };
 
-        class Attention : public Layer
+        class Attention 
         {
         public:
             Attention(int d_model, int num_heads) : d_model(d_model), num_heads(num_heads)
@@ -55,6 +55,17 @@ namespace aurelius
                 return attention_weights * V;
             }
 
+            Eigen::MatrixXf forward(const Eigen::MatrixXf &input)
+            {
+
+            }
+
+            Eigen::MatrixXf backward(const Eigen::MatrixXf &input)
+            {   
+
+            }
+
+
         private:
             int d_model;
             int num_heads;
@@ -65,4 +76,3 @@ namespace aurelius
     }
 }
 
-template <typename Scalar>
