@@ -1,7 +1,7 @@
 # Aurelius : Neural Network with C++ SIMD
 
 ## Overview
-This project is a neural network implementation in C++ utilizing SIMD (Single Instruction, Multiple Data) for optimized performance. The goal is to leverage SIMD instructions to accelerate computations, making the neural network more efficient.
+This project is a neural network implementation in C++ utilizing SIMD (Single Instruction, Multiple Data) for optimized performance. The goal is to leverage SIMD instructions to accelerate computations.
 
 ## Features
 - Implementation of core neural network components
@@ -27,6 +27,8 @@ make
 ## Roadmap
 - [x] Linear Layer
 - [x] Convolution Layer
+- [x] Add optimizer
+- [x] Add most common schedulers such as steps, linear, cosine, reduce on plateau-
 - [ ] Complete attention mechanism implementation
 - [ ] Add more layers with SIMD acceleration
 - [ ] Benchmark performance against non-SIMD implementations
