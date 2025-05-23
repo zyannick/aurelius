@@ -47,7 +47,7 @@ namespace aurelius
             std::unique_ptr<Optimizer> layer_optimizer;
             bool use_avx = true;
             Eigen::MatrixXf forward_simd(const Eigen::MatrixXf &input);
-            Eigen::MatrixXf forward_vectorized(const Eigen::MatrixXf &input);
+            Eigen::MatrixXf forward_eigen(const Eigen::MatrixXf &input);
         };
 
         class ConvLayer
@@ -63,7 +63,7 @@ namespace aurelius
             std::unique_ptr<Optimizer> layer_optimizer;
             bool use_avx = true;
             Eigen::MatrixXf forward_simd(const Eigen::MatrixXf &input);
-            Eigen::MatrixXf forward_vectorized(const Eigen::MatrixXf &input);
+            Eigen::MatrixXf forward_eigen(const Eigen::MatrixXf &input);
 
         public:
             ConvLayer() = default;
