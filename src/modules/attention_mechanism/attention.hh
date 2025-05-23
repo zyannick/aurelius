@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <eigen3/Eigen/Dense>  // For dense matrices and vectors
 #include <layer.hh>
