@@ -81,10 +81,7 @@ namespace aurelius
 
             Eigen::MatrixXf forward_vectorized(const Eigen::MatrixXf &input_signal)
             {
-                // Apply padding conceptually or ensure input_signal is pre-padded
-                // For simplicity, this example assumes input_signal is accessed carefully
-                // and padding means we might read "virtual" zeros.
-                // A common way is to pad the input_signal matrix beforehand.
+
 
                 int L_in = input_signal.cols();
                 int output_length = (L_in - kernel_size + 2 * padding) / stride + 1;
@@ -93,28 +90,26 @@ namespace aurelius
                     throw std::runtime_error("Output length is non-positive. Check parameters.");
                 }
                 Eigen::MatrixXf output(out_channels, output_length);
-                output.setZero(); // Important to initialize
+                output.setZero(); 
 
                 for (int oc = 0; oc < out_channels; ++oc)
-                { // Output channel
+                { 
                     for (int t_out = 0; t_out < output_length; ++t_out)
-                    { // Output time step
+                    { 
                         float dot_product = 0.0f;
-                        int t_in_start = t_out * stride - padding; // Starting input time for this window
+                        int t_in_start = t_out * stride - padding; 
 
                         for (int ic = 0; ic < in_channels; ++ic)
-                        { // Input channel
+                        { 
                             for (int k = 0; k < kernel_size; ++k)
-                            { // Kernel offset
+                            { 
                                 int current_t_in = t_in_start + k;
                                 float input_val = 0.0f;
 
-                                // Handle padding: only access valid input regions
                                 if (current_t_in >= 0 && current_t_in < L_in)
                                 {
                                     input_val = input_signal(ic, current_t_in);
                                 }
-                                // else input_val remains 0.0f (implicit zero-padding)
 
                                 int flat_kernel_idx = ic * kernel_size + k;
                                 dot_product += weights(oc, flat_kernel_idx) * input_val;

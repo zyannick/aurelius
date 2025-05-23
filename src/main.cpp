@@ -9,8 +9,6 @@
 #include <eigen3/unsupported/Eigen/CXX11/Tensor>
 
 
-//g++ -O3 -march=native -Wall -Wextra -I /home/yzoetgna/.local/include/eigen3 main.cpp -o aurelius
-
 
 int main() {
 
