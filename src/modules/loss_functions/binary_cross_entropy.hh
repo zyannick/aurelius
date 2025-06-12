@@ -1,0 +1,91 @@
+
+#pragma once
+#include <eigen3/Eigen/Dense>
+#include <string>
+#include <iostream>
+#include <stdexcept>
+
+namespace aurelius
+{
+    namespace loss_functions
+    {
+
+        class BinaryCrossEntropy
+        {
+
+        private:
+            std::string reduction = "sum";
+            Eigen::MatrixXf last_predictions;
+            Eigen::MatrixXf last_labels;
+
+        public:
+            BinaryCrossEntropy() : reduction("sum")
+            {
+            }
+
+            BinaryCrossEntropy(const std::string &reduction) : reduction(reduction)
+            {
+            }
+
+            float forward(Eigen::MatrixXf predictions, Eigen::MatrixXf labels, float epsilon = 1e-9)
+            {
+
+                if (predictions.rows() != labels.rows() || predictions.cols() != labels.cols())
+                {
+                    throw std::invalid_argument("Predictions and labels must have the same dimensions");
+                }
+
+                last_predictions = predictions;
+                last_labels = labels;
+
+                Eigen::MatrixXf clamped_preds = predictions.cwiseMax(epsilon).cwiseMin(1.0f - epsilon);
+                Eigen::MatrixXf first_term = labels.array() * clamped_preds.array().log();
+                Eigen::MatrixXf second_term = (1 - labels.array()) * (1 - clamped_preds.array()).log();
+                Eigen::MatrixXf loss = -1 * (first_term + second_term);
+                if (reduction == "sum")
+                {
+                    return loss.sum();
+                }
+                else if (reduction == "mean")
+                {
+                    return loss.mean();
+                }
+                else
+                {
+                    throw std::invalid_argument("Unsupported reduction type: " + reduction + ". Use 'sum' or 'mean'.");
+                }
+            }
+
+            Eigen::MatrixXf backward() const
+            {
+                if (last_predictions.size() == 0 || last_labels.size() == 0)
+                {
+                    throw std::runtime_error("backward() called before forward(). Call forward() first.");
+                }
+                Eigen::MatrixXf gradient = last_predictions - last_labels;
+
+                if (reduction == "mean")
+                {
+                    gradient /= static_cast<float>(last_predictions.size());
+                }
+
+                return gradient;
+            }
+
+            const std::string &getReduction() const
+            {
+                return reduction;
+            }
+
+            void setReduction(const std::string &new_reduction)
+            {
+                if (new_reduction != "sum" && new_reduction != "mean")
+                {
+                    throw std::invalid_argument("Unsupported reduction type: " + new_reduction + ". Use 'sum' or 'mean'.");
+                }
+                reduction = new_reduction;
+            }
+        };
+
+    }
+}
