@@ -4,13 +4,18 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
+#include <xsimd/xsimd.hpp>
+#include "modules/activations/sigmoid.hh"
+
+
+using namespace aurelius::activation;
 
 namespace aurelius
 {
     namespace loss_functions
     {
 
-        class BinaryCrossEntropy
+        class BinaryCrossEntropyWithLogits
         {
 
         private:
@@ -19,31 +24,28 @@ namespace aurelius
             Eigen::MatrixXf last_labels;
 
         public:
-            BinaryCrossEntropy() : reduction("sum")
+            BinaryCrossEntropyWithLogits() : reduction("sum")
             {
             }
 
-            BinaryCrossEntropy(const std::string &reduction) : reduction(reduction)
+            BinaryCrossEntropyWithLogits(const std::string &reduction) : reduction(reduction)
             {
             }
 
             float forward(Eigen::MatrixXf predictions, Eigen::MatrixXf labels, float epsilon = 1e-9)
             {
-                // Require predictions to be sigmoid outputs (i.e., in (0,1))
-                assert((last_predictions.array() > 0.0f).all() && (last_predictions.array() < 1.0f).all());
 
                 if (predictions.rows() != labels.rows() || predictions.cols() != labels.cols())
                 {
                     throw std::invalid_argument("Predictions and labels must have the same dimensions");
                 }
 
+                sigmoid(predictions);
                 last_predictions = predictions;
                 last_labels = labels;
 
                 Eigen::MatrixXf clamped_preds = predictions.cwiseMax(epsilon).cwiseMin(1.0f - epsilon);
-                Eigen::MatrixXf first_term = labels.array() * clamped_preds.array().log();
-                Eigen::MatrixXf second_term = (1 - labels.array()) * (1 - clamped_preds.array()).log();
-                Eigen::MatrixXf loss = -1 * (first_term + second_term);
+                Eigen::MatrixXf loss = -1 * (labels.array() * clamped_preds.array().log() + (1 - labels.array()) * (1 - clamped_preds.array()).log());
                 if (reduction == "sum")
                 {
                     return loss.sum();
