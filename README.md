@@ -32,7 +32,8 @@ make
 - [ ] Complete attention mechanism implementation
 - [ ] Add more layers with SIMD acceleration
 - [ ] Benchmark performance against non-SIMD implementations
-- [ ] Setup a AlexNet model
+- [ ] Setup a AlexNet model from scratch
+- [ ] Setup a Variational Auto Encoder from scratch
 
 ## Contributing
 Contributions are welcome! Feel free to open issues or submit pull requests.

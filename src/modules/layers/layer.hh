@@ -24,6 +24,8 @@ namespace aurelius
         public:
             Layer() = default;
             virtual ~Layer() = default;
+            std::shared_ptr<Layer> previous= nullptr;
+            std::weak_ptr<Layer> next;
             virtual Eigen::MatrixXf forward(const Eigen::MatrixXf &input) = 0;
             virtual Eigen::MatrixXf backward(const Eigen::MatrixXf &grad_output) = 0;
             virtual void apply_gradients(float learning_rate) = 0;
@@ -50,7 +52,7 @@ namespace aurelius
             Eigen::MatrixXf forward_eigen(const Eigen::MatrixXf &input);
         };
 
-        class ConvLayer
+        class ConvLayer : Layer
         {
 
         protected:
