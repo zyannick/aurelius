@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
-#include <xsimd/xsimd.hpp>
+// #include <xsimd/xsimd.hpp>
 
 namespace aurelius
 {
