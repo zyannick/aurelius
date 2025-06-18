@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
+#include "aurelius/layer.hh"
 // #include <xsimd/xsimd.hpp>
 
 namespace aurelius

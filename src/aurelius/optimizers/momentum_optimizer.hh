@@ -9,7 +9,7 @@
 #include <memory>
 #include <chrono>
 
-#include "src/modules/optimizers/optimizer.hh"
+#include "aurelius/optimizers/optimizer.hh"
 
 namespace aurelius
 {

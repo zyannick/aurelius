@@ -11,7 +11,7 @@
 #include <eigen3/unsupported/Eigen/CXX11/Tensor>
 #define EIGEN_USE_THREADS
 
-#include "src/modules/optimizers/optimizer.hh"
+#include "aurelius/optimizers/optimizer.hh"
 
 namespace aurelius
 {

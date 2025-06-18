@@ -1,5 +1,6 @@
 #pragma once
 #include <immintrin.h>
+#include "aurelius/layer.hh"
 
 namespace aurelius
 {

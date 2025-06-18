@@ -2,17 +2,15 @@
 #pragma once
 #include <eigen3/Eigen/Dense>
 #include <string>
+#include "aurelius/loss_functions/loss.hh"
 
 namespace aurelius
 {
     namespace loss_functions
     {
 
-        class CrossEntropy
+        class CrossEntropy : Loss
         {
-
-            Eigen::MatrixXf last_predictions;
-            Eigen::MatrixXf last_ground_truth;
 
             CrossEntropy()
             {
@@ -26,6 +24,10 @@ namespace aurelius
             Eigen::MatrixXf backward()
             {
             }
+            private:
+            std::string reduction = "sum";
+            Eigen::MatrixXf last_predictions;
+            Eigen::MatrixXf last_labels;
         };
 
     }
