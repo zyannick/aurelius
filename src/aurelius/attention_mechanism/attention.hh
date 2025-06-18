@@ -1,9 +1,8 @@
 #pragma once
 #include <iostream>
-#include <eigen3/Eigen/Dense> // For dense matrices and vectors
-#include <layer.hh>
+#include <eigen3/Eigen/Dense> 
+#include "aurelius/layer.hh"
 
-using namespace aurelius::layers;
 
 namespace aurelius
 {
@@ -37,7 +36,7 @@ namespace aurelius
             }
         };
 
-        class Attention 
+        class Attention : public Layer
         {
         public:
             Attention(int d_model, int num_heads) : d_model(d_model), num_heads(num_heads)

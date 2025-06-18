@@ -5,12 +5,14 @@
 #include <immintrin.h>
 #include <x86intrin.h>
 
+#include "aurelius/layer.hh"
+
 namespace aurelius
 {
     namespace attention
     {
 
-        class RoPE
+        class RoPE : public Layer
         {
 
         public:

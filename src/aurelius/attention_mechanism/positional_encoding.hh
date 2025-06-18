@@ -4,14 +4,15 @@
 #include <cmath>
 #include <immintrin.h>
 #include <x86intrin.h>
-#include <sleef.h>
+#include "aurelius/layer.hh"
+
 
 namespace aurelius
 {
     namespace attention
     {
 
-        class PositionalEncoding
+        class PositionalEncoding : public Layer
         {
 
         public:

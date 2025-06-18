@@ -5,11 +5,10 @@
 #include <vector>
 #include <cmath>
 
-#include "src/modules/layers/layer.hh"
-#include "src/modules/optimizers/optimizer.hh"
+#include "aurelius/optimizers/optimizer.hh"
+#include "aurelius/conv/conv_layer.hh"
 
-using namespace aurelius::layers;
-
+using namespace aurelius::optimizers;
 namespace aurelius
 {
     namespace convolution
