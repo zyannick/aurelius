@@ -19,13 +19,19 @@ namespace aurelius
             {
             }
 
-            BinaryCrossEntropy(const std::string &reduction) : reduction(reduction)
+            explicit BinaryCrossEntropy(const std::string &reduction) : reduction(reduction)
             {
+                if (reduction != "sum" && reduction != "mean")
+                {
+                    throw std::invalid_argument("Unsupported reduction type: " + reduction + ". Use 'sum' or 'mean'.");
+                }
             }
 
-            float forward(Eigen::MatrixXf predictions, Eigen::MatrixXf labels, float epsilon = 1e-9)
+            virtual ~BinaryCrossEntropy() = default;
+
+            virtual float forward(Eigen::MatrixXf predictions, Eigen::MatrixXf labels, float epsilon = 1e-9)
             {
-                assert((last_predictions.array() > 0.0f).all() && (last_predictions.array() < 1.0f).all());
+                assert((predictions.array() > 0.0f).all() && (predictions.array() < 1.0f).all());
 
                 if (predictions.rows() != labels.rows() || predictions.cols() != labels.cols())
                 {
@@ -51,15 +57,15 @@ namespace aurelius
                 }
             }
 
-            Eigen::MatrixXf backward() const
+            virtual Eigen::MatrixXf backward(float epsilon = 1e-9)
             {
-                assert((last_predictions.array() > 0.0f).all() && (last_predictions.array() < 1.0f).all());
 
                 if (last_predictions.size() == 0 || last_labels.size() == 0)
                 {
                     throw std::runtime_error("backward() called before forward(). Call forward() first.");
                 }
-                Eigen::MatrixXf gradient = last_predictions - last_labels;
+                Eigen::MatrixXf clamped_preds = last_predictions.cwiseMax(epsilon).cwiseMin(1.0f - epsilon);
+                Eigen::MatrixXf gradient = (clamped_preds.array() - last_labels.array()) / (clamped_preds.array() * (1.0f - clamped_preds.array()));
 
                 if (reduction == "mean")
                 {
