@@ -12,6 +12,11 @@ This project is a neural network implementation in C++ utilizing SIMD (Single In
 ## Installation
 To build the project, ensure you have a C++ compiler that supports SIMD instructions (e.g., GCC, Clang, or MSVC) and CMake installed.
 
+```sh
+sudo apt update
+sudo apt install libeigen3-dev
+```
+
 ### Build Instructions
 ```sh
 mkdir build
